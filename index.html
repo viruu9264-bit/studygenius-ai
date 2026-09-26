@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StudyGenius AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#171332; --ink-soft:#5B5876; --line:#E4E1F5;
+  --bg:#F6F5FC; --card:#FFFFFF;
+  --brand:#4B3DF0; --brand-dark:#2E22B8; --brand-light:#EDEBFF;
+  --accent:#00C2A8; --warn:#FF8A3D;
+  --radius:14px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --ink:#EDEBFA; --ink-soft:#A8A4C6; --bg:#0F0E22; --card:#191735; --line:#2C2A54; --brand-light:#23214A; }
+}
+:root[data-theme="dark"]{ --ink:#EDEBFA; --ink-soft:#A8A4C6; --bg:#0F0E22; --card:#191735; --line:#2C2A54; --brand-light:#23214A; }
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',sans-serif;min-height:100%;}
+h1,h2,h3,.brandfont{font-family:'Sora',sans-serif}
+button{font-family:inherit;cursor:pointer;border:none}
+input{font-family:inherit}
+a{color:inherit}
+.hidden{display:none!important}
+.app{max-width:1200px;margin:0 auto;padding:0 20px;}
+
+/* ---- Nav ---- */
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px}
+.logo .dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+.navlinks{display:flex;gap:22px;font-size:14px;color:var(--ink-soft)}
+.navlinks span{cursor:pointer}
+.navlinks span:hover{color:var(--ink)}
+.navbtns{display:flex;gap:10px;align-items:center}
+.btn{padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;background:var(--card);border:1px solid var(--line)}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dark)}
+.btn.block{width:100%}
+.btn.ghost{background:transparent}
+
+/* ---- Landing ---- */
+.hero{display:flex;gap:40px;align-items:center;padding:60px 0;flex-wrap:wrap}
+.hero .copy{flex:1;min-width:280px}
+.hero h1{font-size:42px;line-height:1.1;margin:0 0 14px}
+.hero h1 .hl{color:var(--brand)}
+.hero p{color:var(--ink-soft);font-size:16px;max-width:460px;margin-bottom:20px}
+.feat-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;font-size:14px}
+.feat-row div{display:flex;gap:6px;align-items:center;color:var(--ink-soft)}
+.hero .visual{flex:1;min-width:280px;background:var(--brand-light);border-radius:20px;height:280px;display:flex;align-items:center;justify-content:center;font-size:60px}
+.stats{display:flex;gap:40px;margin-top:30px;flex-wrap:wrap}
+.stats div b{display:block;font-size:22px}
+.stats div span{color:var(--ink-soft);font-size:13px}
+
+/* ---- Auth ---- */
+.authwrap{display:flex;justify-content:center;padding:60px 20px}
+.authcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:36px;width:100%;max-width:400px}
+.authcard h2{margin:0 0 4px}
+.authcard p.sub{color:var(--ink-soft);font-size:14px;margin:0 0 24px}
+.field{margin-bottom:16px}
+.field label{font-size:13px;font-weight:600;display:block;margin-bottom:6px}
+.field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font-size:14px}
+.field input:focus{outline:2px solid var(--brand);outline-offset:1px}
+.authfoot{text-align:center;margin-top:16px;font-size:13px;color:var(--ink-soft)}
+.authfoot b{color:var(--brand);cursor:pointer}
+.err{color:#D6304B;font-size:13px;margin:-8px 0 12px}
+
+/* ---- App shell ---- */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#14122C;color:#C8C5E6;flex-shrink:0;padding:18px 14px;display:flex;flex-direction:column}
+.sidebar .logo{color:#fff;padding:0 6px 20px}
+.sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar nav span{padding:10px 12px;border-radius:9px;font-size:14px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.sidebar nav span:hover{background:#221F44}
+.sidebar nav span.active{background:var(--brand);color:#fff}
+.sidebar .me{border-top:1px solid #2A2750;padding-top:14px;font-size:13px;display:flex;gap:8px;align-items:center}
+.sidebar .me .av{width:30px;height:30px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px}
+.main{flex:1;padding:26px 30px;overflow-x:auto}
+.mobiletopbar{display:none}
+
+/* ---- Dashboard widgets ---- */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.kpi span{font-size:12px;color:var(--ink-soft)}
+.kpi b{font-size:22px;display:block;margin-top:4px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:26px 0 12px}
+.doclist .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.doclist .row:last-child{border:none}
+.pill{font-size:11px;color:var(--ink-soft)}
+.qa-grid{display:grid;gap:10px}
+.qa{padding:12px;border-radius:10px;font-weight:600;font-size:14px;text-align:left;color:#fff}
+
+/* ---- Upload ---- */
+.dropzone{border:2px dashed var(--line);border-radius:var(--radius);padding:60px 20px;text-align:center;background:var(--card);cursor:pointer}
+.dropzone:hover{border-color:var(--brand)}
+.dropzone .ic{font-size:40px}
+
+/* ---- Notes/Quiz/Flash/Tutor ---- */
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tabs button{padding:9px 16px;border-radius:9px;font-size:13px;font-weight:600;background:var(--card);border:1px solid var(--line);color:var(--ink-soft)}
+.tabs button.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.notesbox{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;line-height:1.7;font-size:14px}
+.notesbox h3{margin-top:20px}
+.notesbox h3:first-child{margin-top:0}
+.progressbar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.progressbar i{display:block;height:100%;background:var(--brand)}
+.opt{display:block;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:var(--card);font-size:14px}
+.opt:hover{border-color:var(--brand)}
+.opt.correct{border-color:var(--accent);background:#E8FBF6}
+.opt.wrong{border-color:#D6304B;background:#FDEBEE}
+.qfoot{display:flex;justify-content:space-between;margin-top:16px}
+.flashcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:19px;font-weight:600;padding:30px;cursor:pointer}
+.flashcard .lbl{font-size:12px;color:var(--ink-soft);font-weight:500;position:absolute;margin-top:-80px}
+.chatwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);display:flex;flex-direction:column;height:520px}
+.chatlog{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:75%;padding:11px 14px;border-radius:12px;font-size:14px;line-height:1.5}
+.msg.bot{background:var(--brand-light);align-self:flex-start}
+.msg.user{background:var(--brand);color:#fff;align-self:flex-end}
+.chatin{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.chatin input{flex:1;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink)}
+.chatin button{width:44px;border-radius:9px;background:var(--brand);color:#fff;font-size:16px}
+.suggest{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.suggest span{font-size:12px;padding:7px 11px;border:1px solid var(--line);border-radius:20px;color:var(--ink-soft);cursor:pointer}
+
+/* ---- Pricing ---- */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.plan{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;position:relative}
+.plan.pop{border-color:var(--brand)}
+.badge{position:absolute;top:-11px;right:16px;background:var(--brand);color:#fff;font-size:11px;padding:3px 10px;border-radius:20px}
+.plan .price{font-size:26px;font-weight:800;margin:8px 0 14px}
+.plan .price span{font-size:13px;color:var(--ink-soft);font-weight:500}
+.plan ul{list-style:none;padding:0;margin:0 0 18px;font-size:13px;color:var(--ink-soft)}
+.plan li{padding:6px 0}
+
+@media (max-width:860px){
+  .sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:30;transition:left .2s;box-shadow:0 0 0 100vmax rgba(0,0,0,0);height:100%}
+  .sidebar.open{left:0}
+  .mobiletopbar{display:flex;align-items:center;gap:10px;padding:14px 6px;position:sticky;top:0;background:var(--bg);z-index:20}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .plans{grid-template-columns:1fr}
+  .hero h1{font-size:30px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<div id="view-landing">
+  <div class="topnav">
+    <div class="logo"><span class="dot">🎓</span> StudyGenius AI</div>
+    <div class="navlinks"><span>Home</span><span>Features</span><span>Pricing</span><span onclick="go('pricing')">About</span></div>
+    <div class="navbtns"><button class="btn" onclick="go('login')">Login</button><button class="btn primary" onclick="go('register')">Get Started</button></div>
+  </div>
+  <div class="app">
+    <div class="hero">
+      <div class="copy">
+        <h1>Turn Your PDFs Into <span class="hl">Knowledge</span> with AI</h1>
+        <p>Upload your study material and get AI-powered notes, flashcards, quizzes and an AI tutor — built for the way you actually revise.</p>
+        <div class="feat-row">
+          <div>✅ AI Summary & Notes</div><div>✅ Interactive Quiz</div><div>✅ Smart Flashcards</div><div>✅ AI Tutor</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn primary" onclick="go('register')">Get Started Free</button>
+          <button class="btn" onclick="go('dashboard')">▶ See Demo</button>
+        </div>
+        <div class="stats">
+          <div><b>10K+</b><span>Happy Students</span></div>
+          <div><b>5K+</b><span>PDFs Processed</span></div>
+          <div><b>95%</b><span>Accuracy Rate</span></div>
+          <div><b>24/7</b><span>AI Support</span></div>
+        </div>
+      </div>
+      <div class="visual">📚✨</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<div id="view-login" class="hidden">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="logo brandfont" style="justify-content:center;display:flex;margin-bottom:14px">🎓 StudyGenius AI</div>
+      <h2 style="text-align:center">Welcome back!</h2>
+      <p class="sub" style="text-align:center">Sign in to continue your learning journey</p>
+      <div id="login-err" class="err hidden">Enter a valid email and password (min 4 characters).</div>
+      <div class="field"><label>Email address</label><input id="login-email" type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Enter your password"></div>
+      <button class="btn primary block" onclick="doLogin()">Login</button>
+      <p class="authfoot">Don't have an account? <b onclick="go('register')">Register</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REGISTER ============ -->
+<div id="view-register" class="hidden">
+  <div class="authwrap">
+    <div class="authcard">
+      <div class="logo brandfont" style="justify-content:center;display:flex;margin-bottom:14px">🎓 StudyGenius AI</div>
+      <h2 style="text-align:center">Create your account</h2>
+      <p class="sub" style="text-align:center">Join StudyGenius AI and start learning today</p>
+      <div id="reg-err" class="err hidden">Please fill in your name, a valid email and a password.</div>
+      <div class="field"><label>Full Name</label><input id="reg-name" placeholder="Enter your full name"></div>
+      <div class="field"><label>Email address</label><input id="reg-email" type="email" placeholder="Enter your email"></div>
+      <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="Create a password"></div>
+      <button class="btn primary block" onclick="doRegister()">Register</button>
+      <p class="authfoot">Already have an account? <b onclick="go('login')">Login</b></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div id="view-app" class="shell hidden">
+  <div class="sidebar" id="sidebar">
+    <div class="logo">🎓 StudyGenius AI</div>
+    <nav id="sidenav">
+      <span data-p="dashboard">📊 Dashboard</span>
+      <span data-p="upload">⬆️ Upload PDF</span>
+      <span data-p="documents">📁 My Documents</span>
+      <span data-p="notes">📝 Notes</span>
+      <span data-p="quiz">❓ Quiz</span>
+      <span data-p="flash">🗂️ Flashcards</span>
+      <span data-p="tutor">🤖 AI Tutor</span>
+      <span data-p="progress">📈 Progress</span>
+      <span data-p="pricing">⚙️ Upgrade</span>
+    </nav>
+    <div class="me"><div class="av" id="av"></div><div><div id="mename" style="font-weight:600;color:#fff">Guest</div><div style="font-size:11px">Free Plan</div></div></div>
+  </div>
+
+  <div class="main">
+    <div class="mobiletopbar"><button class="btn" onclick="toggleSide()">☰</button><b>StudyGenius AI</b></div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <h2 id="greet">Good Morning! 👋</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px">Here's your learning progress for today.</p>
+      <div class="grid4">
+        <div class="card kpi"><span>📄 Total Documents</span><b id="k-docs">0</b></div>
+        <div class="card kpi"><span>❓ Quizzes Attempted</span><b id="k-quiz">0</b></div>
+        <div class="card kpi"><span>🎯 Avg Score</span><b id="k-avg">—</b></div>
+        <div class="card kpi"><span>🔥 Study Streak</span><b id="k-streak">1 Day</b></div>
+      </div>
+      <div class="section-title"><h3 style="margin:0">Recent Documents</h3></div>
+      <div class="card doclist" id="recent-docs"></div>
+      <div class="section-title"><h3 style="margin:0">Quick Actions</h3></div>
+      <div class="qa-grid" style="grid-template-columns:repeat(4,1fr);display:grid">
+        <button class="qa" style="background:var(--brand)" onclick="go2('upload')">Upload PDF</button>
+        <button class="qa" style="background:var(--warn)" onclick="go2('notes')">Generate Notes</button>
+        <button class="qa" style="background:var(--accent)" onclick="go2('quiz')">Take Quiz</button>
+        <button class="qa" style="background:#8B5CF6" onclick="go2('flash')">Flashcards</button>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div id="page-upload" class="page hidden">
+      <h2>Upload Your PDF</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px">Upload a study material and let AI do the magic</p>
+      <input type="file" id="filepick" accept="application/pdf" class="hidden" onchange="fileChosen(this.files)">
+      <div class="dropzone" onclick="document.getElementById('filepick').click()" id="dz">
+        <div class="ic">☁️⬆️</div>
+        <p style="font-weight:600;margin:14px 0 4px">Drag & drop your PDF here, or</p>
+        <button class="btn primary" onclick="event.stopPropagation();document.getElementById('filepick').click()">Choose File</button>
+        <p class="pill" style="margin-top:14px">Supported format: PDF (Max 20MB) — demo accepts any file</p>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div id="page-documents" class="page hidden">
+      <h2>My Documents</h2>
+      <div class="card doclist" id="all-docs"></div>
+    </div>
+
+    <!-- NOTES -->
+    <div id="page-notes" class="page hidden">
+      <h2>AI Generated Notes</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px" id="notes-doc">No document uploaded yet</p>
+      <div class="notesbox"><p style="color:var(--ink-soft)">Upload a PDF from the Upload PDF tab — notes will be generated from its actual content here.</p></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="page-quiz" class="page hidden">
+      <h2>Practice Quiz</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px"><span id="q-count">Question 1 of 5</span></p>
+      <div class="progressbar"><i id="q-bar" style="width:20%"></i></div>
+      <div class="card">
+        <p style="font-weight:600;font-size:16px" id="q-text"></p>
+        <div id="q-opts"></div>
+      </div>
+      <div class="qfoot">
+        <button class="btn" onclick="quizNav(-1)">◀ Previous</button>
+        <button class="btn primary" id="q-next" onclick="quizNav(1)">Next ▶</button>
+      </div>
+    </div>
+
+    <!-- FLASHCARDS -->
+    <div id="page-flash" class="page hidden">
+      <h2>Flashcards</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px" id="f-count">Card 1 / 5 — tap to flip</p>
+      <div class="flashcard" id="f-card" onclick="flipCard()"></div>
+      <div class="qfoot"><button class="btn" onclick="flashNav(-1)">◀ Previous</button><button class="btn primary" onclick="flashNav(1)">Next ▶</button></div>
+    </div>
+
+    <!-- TUTOR -->
+    <div id="page-tutor" class="page hidden">
+      <h2>AI Tutor</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px">Ask anything about your study material</p>
+      <div class="suggest">
+        <span onclick="askTutor('Explain this topic simply')">Explain this topic simply</span>
+        <span onclick="askTutor('Give me a quick summary')">Give me a quick summary</span>
+        <span onclick="askTutor('Quiz me on this')">Quiz me on this</span>
+      </div>
+      <div class="chatwrap">
+        <div class="chatlog" id="chatlog"></div>
+        <div class="chatin"><input id="chatinput" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">➤</button></div>
+      </div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="page-progress" class="page hidden">
+      <h2>My Progress</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px">Track your learning journey and improve</p>
+      <div class="grid4">
+        <div class="card kpi"><span>📄 Total Documents</span><b id="p-docs">0</b></div>
+        <div class="card kpi"><span>🎯 Avg Score</span><b id="p-avg">—</b></div>
+        <div class="card kpi"><span>🔥 Study Streak</span><b>1 Day</b></div>
+        <div class="card kpi"><span>❓ Quizzes Taken</span><b id="p-quiz">0</b></div>
+      </div>
+      <div class="section-title"><h3 style="margin:0">Quiz History</h3></div>
+      <div class="card doclist" id="quiz-history"><div class="row"><span style="color:var(--ink-soft)">No quizzes taken yet — try one from the Quiz tab.</span></div></div>
+    </div>
+
+    <!-- PRICING -->
+    <div id="page-pricing" class="page hidden">
+      <h2>Upgrade to Premium</h2>
+      <p style="color:var(--ink-soft);margin-top:-8px">Unlock unlimited access to all features</p>
+      <div class="plans">
+        <div class="plan"><h3>Free</h3><div class="price">₹0 <span>/month</span></div><ul><li>✔ 2 PDF uploads</li><li>✔ Basic notes & quiz</li><li>✔ Limited flashcards</li></ul><button class="btn block">Current Plan</button></div>
+        <div class="plan pop"><span class="badge">Most Popular</span><h3>Pro</h3><div class="price">₹199 <span>/month</span></div><ul><li>✔ Unlimited PDF uploads</li><li>✔ All AI features</li><li>✔ Advanced analytics</li></ul><button class="btn primary block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
+        <div class="plan"><span class="badge" style="background:var(--accent)">Save 15%</span><h3>Yearly</h3><div class="price">₹1,999 <span>/year</span></div><ul><li>✔ Everything in Pro</li><li>✔ Priority support</li></ul><button class="btn block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(window.pdfjsLib){ pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; }
+let sampleAPI = null;
+(async()=>{ try{ sampleAPI = window.claude ? await claude.use('sample') : null; }catch(e){ sampleAPI = null; } })();
+const BACKEND_URL = '/api/ask'; // change this if your backend runs on a different host, e.g. 'https://your-app.onrender.com/api/ask'
+async function backendAsk(prompt){
+  const r = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt}) });
+  const data = await r.json();
+  if(!r.ok) throw {code:'upstream_error', message:data.error||'backend error'};
+  return { text:data.text };
+}
+async function aiAsk(prompt, opts){
+  if(sampleAPI) return await sampleAPI(prompt, opts||{});
+  return await backendAsk(prompt);
+}
+function tryParseJson(text){
+  try{ return JSON.parse(text); }catch(e){}
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i); if(fence){ try{ return JSON.parse(fence[1]); }catch(e){} }
+  const m = text.match(/[\{\[][\s\S]*[\}\]]/); if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  throw {code:'invalid_json', message:'could not parse JSON from AI reply'};
+}
+
+async function extractPdfText(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  let text = '';
+  const pages = Math.min(pdf.numPages, 25);
+  for(let i=1;i<=pages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(it=>it.str).join(' ') + '\n';
+    if(text.length > 18000) break;
+  }
+  return text.slice(0, 18000);
+}
+
+// ---------- state ----------
+let state = { user:null, docs:[], quizScores:[] };
+function save(){ try{ localStorage.setItem('sg_state', JSON.stringify(state)); }catch(e){} }
+function load(){ try{ const s = localStorage.getItem('sg_state'); if(s) state = JSON.parse(s); }catch(e){} }
+load();
+
+const QUIZ = [
+  {q:"What is the SI unit of force?", opts:["Joule (J)","Newton (N)","Watt (W)","Pascal (Pa)"], a:1},
+  {q:"What is the unit of electric current?", opts:["Volt","Ohm","Ampere","Watt"], a:2},
+  {q:"Which law states F = ma?", opts:["Newton's First Law","Newton's Second Law","Newton's Third Law","Law of Gravitation"], a:1},
+  {q:"Energy is the ability to do what?", opts:["Rest","Work","Melt","Freeze"], a:1},
+  {q:"What has both mass and occupies space?", opts:["Energy","Force","Matter","Light"], a:2}
+];
+const FLASH = [
+  {q:"What is the unit of electric current?", a:"Ampere (A)"},
+  {q:"What is Newton's Second Law?", a:"F = ma — force equals mass times acceleration"},
+  {q:"Define Kinetic Energy", a:"KE = ½mv² — energy of a moving object"},
+  {q:"What is Matter?", a:"Anything that has mass and occupies space"},
+  {q:"What is Force?", a:"A push or pull that can change the motion of an object"}
+];
+
+// ---------- landing/auth navigation ----------
+function go(v){
+  ['landing','login','register'].forEach(x=>document.getElementById('view-'+x).classList.add('hidden'));
+  document.getElementById('view-app').classList.add('hidden');
+  document.getElementById('view-'+v).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  if(!email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  state.user = { name: email.split('@')[0], email };
+  save(); enterApp();
+}
+function doRegister(){
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const err = document.getElementById('reg-err');
+  if(!name || !email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  state.user = { name, email };
+  save(); enterApp();
+}
+function enterApp(){
+  document.getElementById('view-landing').classList.add('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-register').classList.add('hidden');
+  document.getElementById('view-app').classList.remove('hidden');
+  document.getElementById('mename').textContent = state.user.name;
+  document.getElementById('av').textContent = state.user.name.charAt(0).toUpperCase();
+  document.getElementById('greet').textContent = 'Good Morning, '+state.user.name+'! 👋';
+  renderDocs(); renderStats();
+  go2('dashboard');
+}
+
+// ---------- sidebar nav ----------
+document.getElementById('sidenav').addEventListener('click', e=>{
+  const p = e.target.getAttribute('data-p'); if(p) go2(p);
+});
+function go2(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('page-'+p).classList.remove('hidden');
+  document.querySelectorAll('#sidenav span').forEach(x=>x.classList.toggle('active', x.getAttribute('data-p')===p));
+  if(window.innerWidth<=860) document.getElementById('sidebar').classList.remove('open');
+  if(p==='quiz') startQuiz();
+  if(p==='flash') startFlash();
+  if(p==='tutor' && !document.getElementById('chatlog').children.length) botSay("Hi! I'm your AI tutor. Ask me anything about your uploaded notes.");
+  if(p==='progress') renderStats();
+  window.scrollTo(0,0);
+}
+function toggleSide(){ document.getElementById('sidebar').classList.toggle('open'); }
+
+// ---------- documents / upload ----------
+let activeDocIdx = null;
+async function fileChosen(files){
+  if(!files.length) return;
+  const f = files[0];
+  const doc = { name:f.name, size:(f.size/1024/1024).toFixed(1)+' MB', date:new Date().toLocaleDateString(), text:null, notesHtml:null, quiz:null, flash:null, status:'reading' };
+  state.docs.unshift(doc); save(); renderDocs();
+  activeDocIdx = 0;
+  const dz = document.getElementById('dz');
+  dz.querySelector('p').textContent = 'Reading '+f.name+'…';
+  try{
+    let text = '';
+    if(f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')){
+      text = await extractPdfText(f);
+    } else {
+      text = await f.text().catch(()=> '');
+    }
+    if(!text || text.trim().length < 20){
+      dz.querySelector('p').textContent = "Couldn't read text from this file — try a text-based PDF.";
+      doc.status='error'; save(); return;
+    }
+    doc.text = text; doc.status='ready'; save();
+    dz.querySelector('p').textContent = 'Drag & drop your PDF here, or';
+    document.getElementById('notes-doc').textContent = doc.name+' • Processing with AI…';
+    go2('notes');
+    await ensureNotes(doc);
+  }catch(e){
+    doc.status='error'; save();
+    dz.querySelector('p').textContent = 'Something went wrong reading that file — try again.';
+  }
+}
+
+function currentDoc(){ return activeDocIdx!==null ? state.docs[activeDocIdx] : null; }
+
+async function askAI(prompt){
+  if(sampleAPI) return await sampleAPI.json(prompt);
+  const {text} = await backendAsk(prompt + '\n\nReply with ONLY the JSON, no other text.');
+  return tryParseJson(text);
+}
+
+async function ensureNotes(doc){
+  const box = document.querySelector('#page-notes .notesbox');
+  if(doc.notesHtml){ box.innerHTML = doc.notesHtml; return; }
+  box.innerHTML = '<p style="color:var(--ink-soft)">Thinking… generating notes from your document.</p>';
+  try{
+    const data = await askAI(`You are generating study notes from real uploaded document text. Reply with ONLY JSON: {"sections":[{"heading":"...","points":["...", "..."]}]} with 3-5 sections and 2-5 concise points each, based strictly on this content:\n\n${doc.text.slice(0,12000)}`);
+    doc.notesHtml = (data.sections||[]).map(s=>`<h3>${escapeHtml(s.heading)}</h3><ul>${(s.points||[]).map(p=>'<li>'+escapeHtml(p)+'</li>').join('')}</ul>`).join('');
+    save(); box.innerHTML = doc.notesHtml;
+    document.getElementById('notes-doc').textContent = doc.name+' • AI notes generated';
+  }catch(e){
+    box.innerHTML = '<p style="color:var(--ink-soft)">Could not generate notes right now ('+(e.code||'error')+'). Try again from My Documents.</p>';
+  }
+}
+function escapeHtml(s){ return String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function renderDocs(){
+  const rd = document.getElementById('recent-docs'), ad = document.getElementById('all-docs');
+  if(!state.docs.length){
+    rd.innerHTML = '<div class="row"><span style="color:var(--ink-soft)">No documents yet — upload a PDF to get started.</span></div>';
+    ad.innerHTML = rd.innerHTML; document.getElementById('k-docs').textContent='0'; document.getElementById('p-docs').textContent='0';
+    return;
+  }
+  const rowHtml = (d,i)=>`<div class="row" style="cursor:pointer" onclick="openDoc(${i})"><span>📄 ${d.name}</span><span class="pill">${d.date}</span></div>`;
+  rd.innerHTML = state.docs.map(rowHtml).join(''); ad.innerHTML = rd.innerHTML;
+  document.getElementById('k-docs').textContent = state.docs.length;
+  document.getElementById('p-docs').textContent = state.docs.length;
+}
+function renderStats(){
+  const n = state.quizScores.length;
+  document.getElementById('k-quiz').textContent = n;
+  document.getElementById('p-quiz').textContent = n;
+  if(n){
+    const avg = Math.round(state.quizScores.reduce((a,b)=>a+b,0)/n);
+    document.getElementById('k-avg').textContent = avg+'%';
+    document.getElementById('p-avg').textContent = avg+'%';
+    document.getElementById('quiz-history').innerHTML = state.quizScores.map((s,i)=>`<div class="row"><span>Quiz attempt ${i+1}</span><span class="pill">${s}%</span></div>`).join('');
+  }
+}
+
+// ---------- quiz ----------
+let qi=0, qsel=[], activeQuiz=QUIZ;
+async function startQuiz(){
+  qi=0;
+  const doc = currentDoc();
+  if(doc && doc.text){
+    document.getElementById('q-text').textContent='Preparing questions from '+doc.name+'…';
+    document.getElementById('q-opts').innerHTML='';
+    if(doc.quiz){ activeQuiz = doc.quiz; }
+    else{
+      try{
+        const data = await askAI(`Create exactly 5 multiple-choice questions testing understanding of this document text. Reply with ONLY JSON: {"questions":[{"q":"...","opts":["a","b","c","d"],"a":0}]} where "a" is the correct option's index (0-3).\n\n${doc.text.slice(0,12000)}`);
+        activeQuiz = (data.questions && data.questions.length) ? data.questions : QUIZ;
+        doc.quiz = activeQuiz; save();
+      }catch(e){ activeQuiz = QUIZ; }
+    }
+  } else { activeQuiz = QUIZ; }
+  qsel=new Array(activeQuiz.length).fill(null); renderQ();
+}
+function renderQ(){
+  const item = activeQuiz[qi];
+  document.getElementById('q-count').textContent = `Question ${qi+1} of ${activeQuiz.length}`;
+  document.getElementById('q-bar').style.width = ((qi+1)/activeQuiz.length*100)+'%';
+  document.getElementById('q-text').textContent = item.q;
+  const box = document.getElementById('q-opts'); box.innerHTML='';
+  item.opts.forEach((o,idx)=>{
+    const b = document.createElement('button');
+    b.className='opt'; b.textContent=o;
+    if(qsel[qi]!==null){
+      if(idx===item.a) b.classList.add('correct');
+      else if(idx===qsel[qi]) b.classList.add('wrong');
+    }
+    b.onclick=()=>{ qsel[qi]=idx; renderQ(); };
+    box.appendChild(b);
+  });
+  document.getElementById('q-next').textContent = qi===activeQuiz.length-1 ? 'Finish' : 'Next ▶';
+}
+function quizNav(dir){
+  if(dir===1 && qi===activeQuiz.length-1){
+    const correct = qsel.filter((s,i)=>s===activeQuiz[i].a).length;
+    const pct = Math.round(correct/activeQuiz.length*100);
+    state.quizScores.push(pct); save(); renderStats();
+    alert(`Quiz complete! Score: ${correct}/${activeQuiz.length} (${pct}%)`);
+    go2('progress'); return;
+  }
+  qi = Math.min(activeQuiz.length-1, Math.max(0, qi+dir));
+  renderQ();
+}
+
+// ---------- flashcards ----------
+let fi=0, flipped=false, activeFlash=FLASH;
+async function startFlash(){
+  fi=0; flipped=false;
+  const doc = currentDoc();
+  if(doc && doc.text){
+    document.getElementById('f-card').textContent='Preparing flashcards…';
+    if(doc.flash){ activeFlash = doc.flash; }
+    else{
+      try{
+        const data = await askAI(`Create exactly 6 flashcards (term/question + short answer) from this document text. Reply with ONLY JSON: {"cards":[{"q":"...","a":"..."}]}.\n\n${doc.text.slice(0,12000)}`);
+        activeFlash = (data.cards && data.cards.length) ? data.cards : FLASH;
+        doc.flash = activeFlash; save();
+      }catch(e){ activeFlash = FLASH; }
+    }
+  } else { activeFlash = FLASH; }
+  renderF();
+}
+function renderF(){
+  document.getElementById('f-count').textContent = `Card ${fi+1} / ${activeFlash.length} — tap to flip`;
+  document.getElementById('f-card').textContent = flipped ? activeFlash[fi].a : activeFlash[fi].q;
+}
+function flipCard(){ flipped=!flipped; renderF(); }
+function flashNav(dir){ fi=(fi+dir+activeFlash.length)%activeFlash.length; flipped=false; renderF(); }
+
+// ---------- AI tutor (simulated) ----------
+function botSay(t){ addMsg(t,'bot'); }
+function addMsg(t, who){
+  const log = document.getElementById('chatlog');
+  const d = document.createElement('div'); d.className='msg '+who; d.textContent=t;
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+function openDoc(i){ activeDocIdx=i; const doc=state.docs[i]; document.getElementById('notes-doc').textContent=doc.name; go2('notes'); ensureNotes(doc); }
+function askTutor(q){ document.getElementById('chatinput').value=q; sendChat(); }
+async function sendChat(){
+  const inp = document.getElementById('chatinput');
+  const v = inp.value.trim(); if(!v) return;
+  addMsg(v,'user'); inp.value='';
+  const doc = currentDoc();
+  const thinkingEl = document.createElement('div'); thinkingEl.className='msg bot'; thinkingEl.textContent='Thinking…';
+  document.getElementById('chatlog').appendChild(thinkingEl); document.getElementById('chatlog').scrollTop=9e9;
+  try{
+    const ctx = doc && doc.text ? `Base your answer only on this document text:\n\n${doc.text.slice(0,10000)}\n\nQuestion: ${v}` : `Answer this study question helpfully and concisely: ${v}`;
+    const {text} = await aiAsk(ctx, { onText:({text})=>{ thinkingEl.textContent = text; document.getElementById('chatlog').scrollTop=9e9; } });
+    thinkingEl.textContent = text;
+  }catch(e){
+    thinkingEl.textContent = e.code==='not_granted' ? "I need permission to answer — please allow AI access for this page." : "Couldn't get an answer right now — make sure the backend server is running.";
+  }
+}
+
+// init: if returning user, skip straight to app
+if(state.user){ document.addEventListener('DOMContentLoaded', enterApp); }
+</script>
+</body>
+</html>
