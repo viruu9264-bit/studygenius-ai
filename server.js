@@ -7,7 +7,7 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static('public')); // put studygenius.html in a "public" folder next to this file
+app.use(express.static('.')); // put studygenius.html in a "public" folder next to this file
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-sonnet-4-6';
