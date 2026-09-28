@@ -137,6 +137,14 @@ a{color:inherit}
 .plan ul{list-style:none;padding:0;margin:0 0 18px;font-size:13px;color:var(--ink-soft)}
 .plan li{padding:6px 0}
 
+.paper h2{text-align:center;margin:0 0 4px}
+.paper .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-soft);border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+.paper .sec{margin:22px 0 8px;font-weight:700;font-family:'Sora',sans-serif}
+.paper ol{padding-left:22px}.paper li{margin-bottom:12px}
+.paper .opts{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:13px;margin-top:4px;color:var(--ink-soft)}
+.paper .ans{display:none;background:var(--brand-light);border-radius:8px;padding:6px 10px;margin-top:6px;font-size:13px}
+.paper.show .ans{display:block}
+@media print{.sidebar,.mobiletopbar,.noprint{display:none!important}.main{padding:0}body{background:#fff;color:#000}.notesbox{border:none}}
 @media (max-width:860px){
   .sidebar{position:fixed;left:-240px;top:0;bottom:0;z-index:30;transition:left .2s;box-shadow:0 0 0 100vmax rgba(0,0,0,0);height:100%}
   .sidebar.open{left:0}
@@ -160,9 +168,9 @@ a{color:inherit}
     <div class="hero">
       <div class="copy">
         <h1>Turn Your PDFs Into <span class="hl">Knowledge</span> with AI</h1>
-        <p>Upload your study material and get AI-powered notes, flashcards, quizzes and an AI tutor — built for the way you actually revise.</p>
+        <p>Upload your study material and get AI-powered notes, question papers, quizzes and an AI tutor — built for the way you actually revise.</p>
         <div class="feat-row">
-          <div>✅ AI Summary & Notes</div><div>✅ Interactive Quiz</div><div>✅ Smart Flashcards</div><div>✅ AI Tutor</div>
+          <div>✅ AI Summary & Notes</div><div>✅ Interactive Quiz</div><div>✅ Question Paper</div><div>✅ AI Tutor</div>
         </div>
         <div style="display:flex;gap:10px">
           <button class="btn primary" onclick="go('register')">Get Started Free</button>
@@ -223,12 +231,13 @@ a{color:inherit}
       <span data-p="documents">📁 My Documents</span>
       <span data-p="notes">📝 Notes</span>
       <span data-p="quiz">❓ Quiz</span>
-      <span data-p="flash">🗂️ Flashcards</span>
+      <span data-p="flash">📄 Question Paper</span>
       <span data-p="tutor">🤖 AI Tutor</span>
       <span data-p="progress">📈 Progress</span>
       <span data-p="pricing">⚙️ Upgrade</span>
+      <span data-p="logout" style="color:#FF8A8A">🚪 Logout</span>
     </nav>
-    <div class="me"><div class="av" id="av"></div><div><div id="mename" style="font-weight:600;color:#fff">Guest</div><div style="font-size:11px">Free Plan</div></div></div>
+    <div class="me"><div class="av" id="av"></div><div style="flex:1"><div id="mename" style="font-weight:600;color:#fff">Guest</div><div style="font-size:11px">Free Plan</div></div><button onclick="logout()" title="Logout" style="background:#221F44;color:#fff;border-radius:8px;padding:6px 9px">⎋</button></div>
   </div>
 
   <div class="main">
@@ -251,7 +260,7 @@ a{color:inherit}
         <button class="qa" style="background:var(--brand)" onclick="go2('upload')">Upload PDF</button>
         <button class="qa" style="background:var(--warn)" onclick="go2('notes')">Generate Notes</button>
         <button class="qa" style="background:var(--accent)" onclick="go2('quiz')">Take Quiz</button>
-        <button class="qa" style="background:#8B5CF6" onclick="go2('flash')">Flashcards</button>
+        <button class="qa" style="background:#8B5CF6" onclick="go2('flash')">Question Paper</button>
       </div>
     </div>
 
@@ -298,10 +307,16 @@ a{color:inherit}
 
     <!-- FLASHCARDS -->
     <div id="page-flash" class="page hidden">
-      <h2>Flashcards</h2>
-      <p style="color:var(--ink-soft);margin-top:-8px" id="f-count">Card 1 / 5 — tap to flip</p>
-      <div class="flashcard" id="f-card" onclick="flipCard()"></div>
-      <div class="qfoot"><button class="btn" onclick="flashNav(-1)">◀ Previous</button><button class="btn primary" onclick="flashNav(1)">Next ▶</button></div>
+      <div class="noprint" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h2 style="margin:0">Question Paper</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="togglePaperAnswers()" id="p-ans-btn">Show Answers</button>
+          <button class="btn" onclick="startPaper(true)">🔄 New Paper</button>
+          <button class="btn primary" onclick="window.print()">🖨️ Print / PDF</button>
+        </div>
+      </div>
+      <p class="noprint" style="color:var(--ink-soft)">Exam-style questions generated from your uploaded PDF</p>
+      <div class="notesbox" id="paper-box"></div>
     </div>
 
     <!-- TUTOR -->
@@ -338,7 +353,7 @@ a{color:inherit}
       <h2>Upgrade to Premium</h2>
       <p style="color:var(--ink-soft);margin-top:-8px">Unlock unlimited access to all features</p>
       <div class="plans">
-        <div class="plan"><h3>Free</h3><div class="price">₹0 <span>/month</span></div><ul><li>✔ 2 PDF uploads</li><li>✔ Basic notes & quiz</li><li>✔ Limited flashcards</li></ul><button class="btn block">Current Plan</button></div>
+        <div class="plan"><h3>Free</h3><div class="price">₹0 <span>/month</span></div><ul><li>✔ 2 PDF uploads</li><li>✔ Basic notes & quiz</li><li>✔ Limited question papers</li></ul><button class="btn block">Current Plan</button></div>
         <div class="plan pop"><span class="badge">Most Popular</span><h3>Pro</h3><div class="price">₹199 <span>/month</span></div><ul><li>✔ Unlimited PDF uploads</li><li>✔ All AI features</li><li>✔ Advanced analytics</li></ul><button class="btn primary block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
         <div class="plan"><span class="badge" style="background:var(--accent)">Save 15%</span><h3>Yearly</h3><div class="price">₹1,999 <span>/year</span></div><ul><li>✔ Everything in Pro</li><li>✔ Priority support</li></ul><button class="btn block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
       </div>
@@ -354,9 +369,14 @@ let sampleAPI = null;
 (async()=>{ try{ sampleAPI = window.claude ? await claude.use('sample') : null; }catch(e){ sampleAPI = null; } })();
 const BACKEND_URL = '/api/ask'; // change this if your backend runs on a different host, e.g. 'https://your-app.onrender.com/api/ask'
 async function backendAsk(prompt){
-  const r = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt}) });
-  const data = await r.json();
-  if(!r.ok) throw {code:'upstream_error', message:data.error||'backend error'};
+  let r, raw;
+  try{
+    r = await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prompt}) });
+    raw = await r.text();
+  }catch(e){ throw {code:'network', message:'Server se connect nahi zala (network/server sleeping)'}; }
+  let data = null;
+  try{ data = JSON.parse(raw); }catch(e){}
+  if(!r.ok || !data) throw {code:'http_'+r.status, message:(data && data.error) ? data.error : 'Server error '+r.status+' (server restart hot asel, 1 minute thamba)'};
   return { text:data.text };
 }
 async function aiAsk(prompt, opts){
@@ -405,7 +425,7 @@ function doLogin(){
   const err = document.getElementById('login-err');
   if(!email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
   err.classList.add('hidden');
-  state.user = { name: email.split('@')[0], email };
+  setUser({ name: email.split('@')[0], email });
   save(); enterApp();
 }
 function doRegister(){
@@ -415,8 +435,19 @@ function doRegister(){
   const err = document.getElementById('reg-err');
   if(!name || !email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
   err.classList.add('hidden');
-  state.user = { name, email };
+  setUser({ name, email });
   save(); enterApp();
+}
+function setUser(u){
+  if(state.lastEmail && state.lastEmail !== u.email){ state.docs=[]; state.quizScores=[]; activeDocIdx=null; }
+  state.user = u; state.lastEmail = u.email;
+}
+function logout(){
+  if(!confirm('Logout karaycha aahe ka?')) return;
+  state.user = null; save();
+  ['login-email','login-pass','reg-name','reg-email','reg-pass'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('sidebar').classList.remove('open');
+  go('login');
 }
 function enterApp(){
   document.getElementById('view-landing').classList.add('hidden');
@@ -432,7 +463,7 @@ function enterApp(){
 
 // ---------- sidebar nav ----------
 document.getElementById('sidenav').addEventListener('click', e=>{
-  const p = e.target.getAttribute('data-p'); if(p) go2(p);
+  const p = e.target.getAttribute('data-p'); if(p==='logout'){ logout(); return; } if(p) go2(p);
 });
 function go2(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));
@@ -440,7 +471,7 @@ function go2(p){
   document.querySelectorAll('#sidenav span').forEach(x=>x.classList.toggle('active', x.getAttribute('data-p')===p));
   if(window.innerWidth<=860) document.getElementById('sidebar').classList.remove('open');
   if(p==='quiz') startQuiz();
-  if(p==='flash') startFlash();
+  if(p==='flash') startPaper();
   if(p==='tutor' && !document.getElementById('chatlog').children.length) botSay("Hi! I'm your AI tutor. Ask me anything about your uploaded notes.");
   if(p==='progress') renderStats();
   window.scrollTo(0,0);
@@ -452,7 +483,7 @@ let activeDocIdx = null;
 async function fileChosen(files){
   if(!files.length) return;
   const f = files[0];
-  const doc = { name:f.name, size:(f.size/1024/1024).toFixed(1)+' MB', date:new Date().toLocaleDateString(), text:null, notesHtml:null, quiz:null, flash:null, status:'reading' };
+  const doc = { name:f.name, size:(f.size/1024/1024).toFixed(1)+' MB', date:new Date().toLocaleDateString(), text:null, notesHtml:null, quiz:null, paper:null, status:'reading' };
   state.docs = state.docs.filter(d=>!(d.name===doc.name && d.size===doc.size));
   state.docs.unshift(doc); save(); renderDocs();
   activeDocIdx = 0;
@@ -498,7 +529,7 @@ async function ensureNotes(doc){
     save(); box.innerHTML = doc.notesHtml;
     document.getElementById('notes-doc').textContent = doc.name+' • AI notes generated';
   }catch(e){
-    box.innerHTML = '<p style="color:var(--ink-soft)">Could not generate notes right now ('+(e.code||'error')+'). Try again from My Documents.</p>';
+    box.innerHTML = '<p style="color:var(--ink-soft)">Could not generate notes: '+escapeHtml(e.message||e.code||'unknown error')+' <button class="btn primary" onclick="openDoc(activeDocIdx||0)">Retry</button></p>';
   }
 }
 function escapeHtml(s){ return String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
@@ -583,33 +614,45 @@ function quizNav(dir){
   renderQ();
 }
 
-// ---------- flashcards ----------
-let fi=0, flipped=false, activeFlash=[];
-async function startFlash(){
-  fi=0; flipped=false;
-  const card = document.getElementById('f-card');
+// ---------- question paper ----------
+function paperMsg(h){ document.getElementById('paper-box').innerHTML = '<p style="color:var(--ink-soft)">'+h+'</p>'; }
+function togglePaperAnswers(){
+  const box = document.querySelector('#paper-box .paper'); if(!box) return;
+  const on = box.classList.toggle('show');
+  document.getElementById('p-ans-btn').textContent = on ? 'Hide Answers' : 'Show Answers';
+}
+function renderPaper(doc){
+  const p = doc.paper;
+  const total = p.sections.reduce((t,sec)=>t+(sec.questions||[]).length*(Number(sec.marks_each)||1),0);
+  let n = 0;
+  const secs = p.sections.map(sec=>{
+    const qs = (sec.questions||[]).map(q=>{
+      n++;
+      const opts = (q.opts && q.opts.length) ? '<div class="opts">'+q.opts.map((o,i)=>'<span>('+String.fromCharCode(97+i)+') '+escapeHtml(o)+'</span>').join('')+'</div>' : '';
+      return '<li value="'+n+'">'+escapeHtml(q.q)+opts+'<div class="ans"><b>Answer:</b> '+escapeHtml(q.a||'')+'</div></li>';
+    }).join('');
+    return '<div class="sec">'+escapeHtml(sec.name)+' <span style="font-weight:500;color:var(--ink-soft)">('+(Number(sec.marks_each)||1)+' marks each)</span></div><ol>'+qs+'</ol>';
+  }).join('');
+  document.getElementById('paper-box').innerHTML = '<div class="paper"><h2>'+escapeHtml(p.title||doc.name)+'</h2><div class="meta"><span>Source: '+escapeHtml(doc.name)+'</span><span>Total Marks: '+total+'</span></div>'+secs+'</div>';
+  document.getElementById('p-ans-btn').textContent = 'Show Answers';
+}
+async function startPaper(force){
   const doc = currentDoc();
-  if(!doc || !doc.text){ card.textContent='Upload a PDF first — flashcards are generated from your file.'; activeFlash=[]; return; }
-  if(!doc.flash){
-    card.textContent='Generating flashcards from '+doc.name+'…';
+  if(!doc || !doc.text){ paperMsg('Upload a PDF first — the question paper is generated from your file.'); return; }
+  if(force) doc.paper = null;
+  if(!doc.paper){
+    paperMsg('Generating question paper from '+escapeHtml(doc.name)+'…');
     try{
-      const data = await askAI(`Create exactly 10 flashcards based ONLY on the content of this document (key terms, definitions, facts). Reply with ONLY JSON: {"cards":[{"q":"...","a":"..."}]}.\n\n${doc.text.slice(0,12000)}`);
-      if(!data.cards || !data.cards.length) throw new Error('empty');
-      doc.flash = data.cards; save();
+      const data = await askAI(`Act as an examiner. Create an exam question paper based ONLY on the content of this document. Reply with ONLY JSON: {"title":"...","sections":[{"name":"Section A - Multiple Choice","marks_each":1,"questions":[{"q":"...","opts":["a","b","c","d"],"a":"correct option text"}]},{"name":"Section B - Short Answer","marks_each":2,"questions":[{"q":"...","a":"model answer in 1-2 lines"}]},{"name":"Section C - Long Answer","marks_each":5,"questions":[{"q":"...","a":"key points of the model answer"}]}]}. Use 5 MCQs, 4 short answer and 2 long answer questions.\n\n${doc.text.slice(0,12000)}`);
+      if(!data.sections || !data.sections.length) throw new Error('empty');
+      doc.paper = data; save();
     }catch(e){
-      card.innerHTML='Could not generate flashcards. <button class="btn primary" onclick="event.stopPropagation();startFlash()">Retry</button>';
-      activeFlash=[]; return;
+      paperMsg('Could not generate question paper ('+escapeHtml(e.message||e.code||'error')+'). <button class="btn primary" onclick="startPaper()">Retry</button>');
+      return;
     }
   }
-  activeFlash = doc.flash;
-  renderF();
+  renderPaper(doc);
 }
-function renderF(){
-  document.getElementById('f-count').textContent = `Card ${fi+1} / ${activeFlash.length} — tap to flip`;
-  document.getElementById('f-card').textContent = flipped ? activeFlash[fi].a : activeFlash[fi].q;
-}
-function flipCard(){ if(!activeFlash.length) return; flipped=!flipped; renderF(); }
-function flashNav(dir){ if(!activeFlash.length) return; fi=(fi+dir+activeFlash.length)%activeFlash.length; flipped=false; renderF(); }
 
 // ---------- AI tutor (simulated) ----------
 function botSay(t){ addMsg(t,'bot'); }
