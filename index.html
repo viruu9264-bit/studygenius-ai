@@ -390,20 +390,7 @@ function save(){ try{ localStorage.setItem('sg_state', JSON.stringify(state)); }
 function load(){ try{ const s = localStorage.getItem('sg_state'); if(s) state = JSON.parse(s); }catch(e){} }
 load();
 
-const QUIZ = [
-  {q:"What is the SI unit of force?", opts:["Joule (J)","Newton (N)","Watt (W)","Pascal (Pa)"], a:1},
-  {q:"What is the unit of electric current?", opts:["Volt","Ohm","Ampere","Watt"], a:2},
-  {q:"Which law states F = ma?", opts:["Newton's First Law","Newton's Second Law","Newton's Third Law","Law of Gravitation"], a:1},
-  {q:"Energy is the ability to do what?", opts:["Rest","Work","Melt","Freeze"], a:1},
-  {q:"What has both mass and occupies space?", opts:["Energy","Force","Matter","Light"], a:2}
-];
-const FLASH = [
-  {q:"What is the unit of electric current?", a:"Ampere (A)"},
-  {q:"What is Newton's Second Law?", a:"F = ma — force equals mass times acceleration"},
-  {q:"Define Kinetic Energy", a:"KE = ½mv² — energy of a moving object"},
-  {q:"What is Matter?", a:"Anything that has mass and occupies space"},
-  {q:"What is Force?", a:"A push or pull that can change the motion of an object"}
-];
+
 
 // ---------- landing/auth navigation ----------
 function go(v){
@@ -466,6 +453,7 @@ async function fileChosen(files){
   if(!files.length) return;
   const f = files[0];
   const doc = { name:f.name, size:(f.size/1024/1024).toFixed(1)+' MB', date:new Date().toLocaleDateString(), text:null, notesHtml:null, quiz:null, flash:null, status:'reading' };
+  state.docs = state.docs.filter(d=>!(d.name===doc.name && d.size===doc.size));
   state.docs.unshift(doc); save(); renderDocs();
   activeDocIdx = 0;
   const dz = document.getElementById('dz');
@@ -492,7 +480,7 @@ async function fileChosen(files){
   }
 }
 
-function currentDoc(){ return activeDocIdx!==null ? state.docs[activeDocIdx] : null; }
+function currentDoc(){ const i = activeDocIdx!==null ? activeDocIdx : 0; return state.docs[i] || null; }
 
 async function askAI(prompt){
   if(sampleAPI) return await sampleAPI.json(prompt);
@@ -539,22 +527,29 @@ function renderStats(){
 }
 
 // ---------- quiz ----------
-let qi=0, qsel=[], activeQuiz=QUIZ;
+let qi=0, qsel=[], activeQuiz=[];
+function quizMsg(html){
+  document.getElementById('q-count').textContent='';
+  document.getElementById('q-bar').style.width='0%';
+  document.getElementById('q-text').innerHTML=html;
+  document.getElementById('q-opts').innerHTML='';
+}
 async function startQuiz(){
   qi=0;
   const doc = currentDoc();
-  if(doc && doc.text){
-    document.getElementById('q-text').textContent='Preparing questions from '+doc.name+'…';
-    document.getElementById('q-opts').innerHTML='';
-    if(doc.quiz){ activeQuiz = doc.quiz; }
-    else{
-      try{
-        const data = await askAI(`Create exactly 5 multiple-choice questions testing understanding of this document text. Reply with ONLY JSON: {"questions":[{"q":"...","opts":["a","b","c","d"],"a":0}]} where "a" is the correct option's index (0-3).\n\n${doc.text.slice(0,12000)}`);
-        activeQuiz = (data.questions && data.questions.length) ? data.questions : QUIZ;
-        doc.quiz = activeQuiz; save();
-      }catch(e){ activeQuiz = QUIZ; }
+  if(!doc || !doc.text){ quizMsg('Upload a PDF first — quiz questions are generated from your file.'); activeQuiz=[]; return; }
+  if(!doc.quiz){
+    quizMsg('Generating questions from '+escapeHtml(doc.name)+'…');
+    try{
+      const data = await askAI(`Create exactly 8 multiple-choice questions based ONLY on the content of this document. Each question must test a specific fact or concept from the text. Reply with ONLY JSON: {"questions":[{"q":"...","opts":["a","b","c","d"],"a":0}]} where "a" is the correct option's index (0-3).\n\n${doc.text.slice(0,12000)}`);
+      if(!data.questions || !data.questions.length) throw new Error('empty');
+      doc.quiz = data.questions; save();
+    }catch(e){
+      quizMsg('Could not generate questions ('+(e.message||e.code||'error')+'). <button class="btn primary" onclick="startQuiz()">Retry</button>');
+      activeQuiz=[]; return;
     }
-  } else { activeQuiz = QUIZ; }
+  }
+  activeQuiz = doc.quiz;
   qsel=new Array(activeQuiz.length).fill(null); renderQ();
 }
 function renderQ(){
@@ -576,6 +571,7 @@ function renderQ(){
   document.getElementById('q-next').textContent = qi===activeQuiz.length-1 ? 'Finish' : 'Next ▶';
 }
 function quizNav(dir){
+  if(!activeQuiz.length) return;
   if(dir===1 && qi===activeQuiz.length-1){
     const correct = qsel.filter((s,i)=>s===activeQuiz[i].a).length;
     const pct = Math.round(correct/activeQuiz.length*100);
@@ -588,29 +584,32 @@ function quizNav(dir){
 }
 
 // ---------- flashcards ----------
-let fi=0, flipped=false, activeFlash=FLASH;
+let fi=0, flipped=false, activeFlash=[];
 async function startFlash(){
   fi=0; flipped=false;
+  const card = document.getElementById('f-card');
   const doc = currentDoc();
-  if(doc && doc.text){
-    document.getElementById('f-card').textContent='Preparing flashcards…';
-    if(doc.flash){ activeFlash = doc.flash; }
-    else{
-      try{
-        const data = await askAI(`Create exactly 6 flashcards (term/question + short answer) from this document text. Reply with ONLY JSON: {"cards":[{"q":"...","a":"..."}]}.\n\n${doc.text.slice(0,12000)}`);
-        activeFlash = (data.cards && data.cards.length) ? data.cards : FLASH;
-        doc.flash = activeFlash; save();
-      }catch(e){ activeFlash = FLASH; }
+  if(!doc || !doc.text){ card.textContent='Upload a PDF first — flashcards are generated from your file.'; activeFlash=[]; return; }
+  if(!doc.flash){
+    card.textContent='Generating flashcards from '+doc.name+'…';
+    try{
+      const data = await askAI(`Create exactly 10 flashcards based ONLY on the content of this document (key terms, definitions, facts). Reply with ONLY JSON: {"cards":[{"q":"...","a":"..."}]}.\n\n${doc.text.slice(0,12000)}`);
+      if(!data.cards || !data.cards.length) throw new Error('empty');
+      doc.flash = data.cards; save();
+    }catch(e){
+      card.innerHTML='Could not generate flashcards. <button class="btn primary" onclick="event.stopPropagation();startFlash()">Retry</button>';
+      activeFlash=[]; return;
     }
-  } else { activeFlash = FLASH; }
+  }
+  activeFlash = doc.flash;
   renderF();
 }
 function renderF(){
   document.getElementById('f-count').textContent = `Card ${fi+1} / ${activeFlash.length} — tap to flip`;
   document.getElementById('f-card').textContent = flipped ? activeFlash[fi].a : activeFlash[fi].q;
 }
-function flipCard(){ flipped=!flipped; renderF(); }
-function flashNav(dir){ fi=(fi+dir+activeFlash.length)%activeFlash.length; flipped=false; renderF(); }
+function flipCard(){ if(!activeFlash.length) return; flipped=!flipped; renderF(); }
+function flashNav(dir){ if(!activeFlash.length) return; fi=(fi+dir+activeFlash.length)%activeFlash.length; flipped=false; renderF(); }
 
 // ---------- AI tutor (simulated) ----------
 function botSay(t){ addMsg(t,'bot'); }
