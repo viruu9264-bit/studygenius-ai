@@ -195,7 +195,7 @@ a{color:inherit}
       <div class="logo brandfont" style="justify-content:center;display:flex;margin-bottom:14px">🎓 StudyGenius AI</div>
       <h2 style="text-align:center">Welcome back!</h2>
       <p class="sub" style="text-align:center">Sign in to continue your learning journey</p>
-      <div id="login-err" class="err hidden">Enter a valid email and password (min 4 characters).</div>
+      <div id="login-err" class="err hidden">Invalid email or password.</div>
       <div class="field"><label>Email address</label><input id="login-email" type="email" placeholder="you@example.com"></div>
       <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="Enter your password"></div>
       <button class="btn primary block" onclick="doLogin()">Login</button>
@@ -211,10 +211,10 @@ a{color:inherit}
       <div class="logo brandfont" style="justify-content:center;display:flex;margin-bottom:14px">🎓 StudyGenius AI</div>
       <h2 style="text-align:center">Create your account</h2>
       <p class="sub" style="text-align:center">Join StudyGenius AI and start learning today</p>
-      <div id="reg-err" class="err hidden">Please fill in your name, a valid email and a password.</div>
+      <div id="reg-err" class="err hidden">Please check your details.</div>
       <div class="field"><label>Full Name</label><input id="reg-name" placeholder="Enter your full name"></div>
       <div class="field"><label>Email address</label><input id="reg-email" type="email" placeholder="Enter your email"></div>
-      <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="Create a password"></div>
+      <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="At least 6 characters"></div>
       <button class="btn primary block" onclick="doRegister()">Register</button>
       <p class="authfoot">Already have an account? <b onclick="go('login')">Login</b></p>
     </div>
@@ -438,27 +438,39 @@ function go(v){
   window.scrollTo(0,0);
 }
 function doLogin(){
-  const email = document.getElementById('login-email').value.trim();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
   const pass = document.getElementById('login-pass').value;
   const err = document.getElementById('login-err');
-  if(!email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
+  const saved = state.creds && state.creds[email];
+  if(!email.includes('@') || !pass || !saved || saved !== btoa(pass)){
+    err.textContent = 'Invalid email or password.'; err.classList.remove('hidden'); return;
+  }
   err.classList.add('hidden');
-  setUser({ name: email.split('@')[0], email });
+  const name = (state.users[email] && state.users[email].name) || email.split('@')[0];
+  setUser({ name, email });
   save(); enterApp();
 }
 function doRegister(){
   const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
   const pass = document.getElementById('reg-pass').value;
   const err = document.getElementById('reg-err');
-  if(!name || !email.includes('@') || pass.length < 4){ err.classList.remove('hidden'); return; }
+  if(!state.creds) state.creds = {};
+  if(!name || !email.includes('@') || pass.length < 6){
+    err.textContent = 'Please enter your name, a valid email, and a password of at least 6 characters.'; err.classList.remove('hidden'); return;
+  }
+  if(state.creds[email]){
+    err.textContent = 'An account with this email already exists — please login instead.'; err.classList.remove('hidden'); return;
+  }
   err.classList.add('hidden');
+  state.creds[email] = btoa(pass);
   setUser({ name, email });
   save(); enterApp();
 }
 function setUser(u){
   activeDocIdx = null;
   if(!state.users[u.email]) state.users[u.email] = { docs:[], quizScores:[] };
+  state.users[u.email].name = u.name;
   state.currentEmail = u.email; state.lastEmail = u.email;
   state.docs = state.users[u.email].docs;
   state.quizScores = state.users[u.email].quizScores;
@@ -720,7 +732,10 @@ async function sendChat(){
 }
 
 // init: if returning user, skip straight to app
-if(state.user){ document.addEventListener('DOMContentLoaded', enterApp); }
+if(state.user){
+  if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', enterApp); }
+  else { enterApp(); }
+}
 </script>
 </body>
 </html>
