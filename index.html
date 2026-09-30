@@ -309,9 +309,15 @@ a{color:inherit}
     <div id="page-flash" class="page hidden">
       <div class="noprint" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
         <h2 style="margin:0">Question Paper</h2>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="paper-marks" class="btn" style="padding:9px 10px">
+            <option value="25">25 Marks</option>
+            <option value="50" selected>50 Marks</option>
+            <option value="75">75 Marks</option>
+            <option value="100">100 Marks</option>
+          </select>
           <button class="btn" onclick="togglePaperAnswers()" id="p-ans-btn">Show Answers</button>
-          <button class="btn" onclick="startPaper(true)">🔄 New Paper</button>
+          <button class="btn" onclick="startPaper(true)">🔄 Generate Paper</button>
           <button class="btn primary" onclick="window.print()">🖨️ Print / PDF</button>
         </div>
       </div>
@@ -354,8 +360,8 @@ a{color:inherit}
       <p style="color:var(--ink-soft);margin-top:-8px">Unlock unlimited access to all features</p>
       <div class="plans">
         <div class="plan"><h3>Free</h3><div class="price">₹0 <span>/month</span></div><ul><li>✔ 2 PDF uploads</li><li>✔ Basic notes & quiz</li><li>✔ Limited question papers</li></ul><button class="btn block">Current Plan</button></div>
-        <div class="plan pop"><span class="badge">Most Popular</span><h3>Pro</h3><div class="price">₹199 <span>/month</span></div><ul><li>✔ Unlimited PDF uploads</li><li>✔ All AI features</li><li>✔ Advanced analytics</li></ul><button class="btn primary block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
-        <div class="plan"><span class="badge" style="background:var(--accent)">Save 15%</span><h3>Yearly</h3><div class="price">₹1,999 <span>/year</span></div><ul><li>✔ Everything in Pro</li><li>✔ Priority support</li></ul><button class="btn block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
+        <div class="plan pop"><span class="badge">Most Popular</span><h3>Pro</h3><div class="price">₹99 <span>/month</span></div><ul><li>✔ Unlimited PDF uploads</li><li>✔ All AI features</li><li>✔ Advanced analytics</li></ul><button class="btn primary block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
+        <div class="plan"><span class="badge" style="background:var(--accent)">Save 16%</span><h3>Yearly</h3><div class="price">₹999 <span>/year</span></div><ul><li>✔ Everything in Pro</li><li>✔ Priority support</li></ul><button class="btn block" onclick="alert('Payment integration goes here (e.g. Razorpay).')">Upgrade Now</button></div>
       </div>
     </div>
 
@@ -404,10 +410,22 @@ async function extractPdfText(file){
   return text.slice(0, 18000);
 }
 
-// ---------- state ----------
-let state = { user:null, docs:[], quizScores:[] };
+// ---------- state (each logged-in user gets their own docs/scores) ----------
+let state = { user:null, users:{}, currentEmail:null, docs:[], quizScores:[] };
 function save(){ try{ localStorage.setItem('sg_state', JSON.stringify(state)); }catch(e){} }
-function load(){ try{ const s = localStorage.getItem('sg_state'); if(s) state = JSON.parse(s); }catch(e){} }
+function load(){
+  try{ const s = localStorage.getItem('sg_state'); if(s) state = JSON.parse(s); }catch(e){}
+  if(!state.users) state.users = {};
+  if(!state.currentEmail && state.lastEmail){ // migrate old single-user format
+    state.currentEmail = state.lastEmail;
+    state.users[state.lastEmail] = { docs: state.docs||[], quizScores: state.quizScores||[] };
+  }
+  if(state.currentEmail){
+    if(!state.users[state.currentEmail]) state.users[state.currentEmail] = { docs:[], quizScores:[] };
+    state.docs = state.users[state.currentEmail].docs;
+    state.quizScores = state.users[state.currentEmail].quizScores;
+  }
+}
 load();
 
 
@@ -439,8 +457,12 @@ function doRegister(){
   save(); enterApp();
 }
 function setUser(u){
-  if(state.lastEmail && state.lastEmail !== u.email){ state.docs=[]; state.quizScores=[]; activeDocIdx=null; }
-  state.user = u; state.lastEmail = u.email;
+  activeDocIdx = null;
+  if(!state.users[u.email]) state.users[u.email] = { docs:[], quizScores:[] };
+  state.currentEmail = u.email; state.lastEmail = u.email;
+  state.docs = state.users[u.email].docs;
+  state.quizScores = state.users[u.email].quizScores;
+  state.user = u;
 }
 function logout(){
   if(!confirm('Logout karaycha aahe ka?')) return;
@@ -540,7 +562,7 @@ function renderDocs(){
     ad.innerHTML = rd.innerHTML; document.getElementById('k-docs').textContent='0'; document.getElementById('p-docs').textContent='0';
     return;
   }
-  const rowHtml = (d,i)=>`<div class="row" style="cursor:pointer" onclick="openDoc(${i})"><span>📄 ${d.name}</span><span class="pill">${d.date}</span></div>`;
+  const rowHtml = (d,i)=>`<div class="row" style="align-items:center"><span style="cursor:pointer;flex:1" onclick="openDoc(${i})">📄 ${escapeHtml(d.name)}</span><span class="pill" style="margin-right:10px">${d.date}</span><button onclick="event.stopPropagation();deleteDoc(${i})" title="Delete" style="background:none;color:#D6304B;font-size:16px;padding:2px 6px">🗑</button></div>`;
   rd.innerHTML = state.docs.map(rowHtml).join(''); ad.innerHTML = rd.innerHTML;
   document.getElementById('k-docs').textContent = state.docs.length;
   document.getElementById('p-docs').textContent = state.docs.length;
@@ -638,19 +660,22 @@ function renderPaper(doc){
 }
 async function startPaper(force){
   const doc = currentDoc();
+  const marksSel = document.getElementById('paper-marks');
+  const marks = marksSel ? marksSel.value : '50';
   if(!doc || !doc.text){ paperMsg('Upload a PDF first — the question paper is generated from your file.'); return; }
-  if(force) doc.paper = null;
+  if(force || (doc.paper && doc.paperMarks !== marks)) doc.paper = null;
   if(!doc.paper){
-    paperMsg('Generating question paper from '+escapeHtml(doc.name)+'…');
+    paperMsg('Generating a '+marks+'-mark question paper from '+escapeHtml(doc.name)+'…');
     try{
-      const data = await askAI(`Act as an examiner. Create an exam question paper based ONLY on the content of this document. Reply with ONLY JSON: {"title":"...","sections":[{"name":"Section A - Multiple Choice","marks_each":1,"questions":[{"q":"...","opts":["a","b","c","d"],"a":"correct option text"}]},{"name":"Section B - Short Answer","marks_each":2,"questions":[{"q":"...","a":"model answer in 1-2 lines"}]},{"name":"Section C - Long Answer","marks_each":5,"questions":[{"q":"...","a":"key points of the model answer"}]}]}. Use 5 MCQs, 4 short answer and 2 long answer questions.\n\n${doc.text.slice(0,12000)}`);
+      const data = await askAI(`Act as an examiner. Create an exam question paper worth a TOTAL of approximately ${marks} marks, based ONLY on the content of this document. Choose a sensible mix of MCQs (1 mark), short-answer (2-3 marks) and long-answer (5 marks) questions whose marks add up to about ${marks}. Reply with ONLY JSON: {"title":"...","sections":[{"name":"Section A - Multiple Choice","marks_each":1,"questions":[{"q":"...","opts":["a","b","c","d"],"a":"correct option text"}]},{"name":"Section B - Short Answer","marks_each":2,"questions":[{"q":"...","a":"model answer in 1-2 lines"}]},{"name":"Section C - Long Answer","marks_each":5,"questions":[{"q":"...","a":"key points of the model answer"}]}]}.\n\n${doc.text.slice(0,12000)}`);
       if(!data.sections || !data.sections.length) throw new Error('empty');
-      doc.paper = data; save();
+      doc.paper = data; doc.paperMarks = marks; save();
     }catch(e){
-      paperMsg('Could not generate question paper ('+escapeHtml(e.message||e.code||'error')+'). <button class="btn primary" onclick="startPaper()">Retry</button>');
+      paperMsg('Could not generate question paper ('+escapeHtml(e.message||e.code||'error')+'). <button class="btn primary" onclick="startPaper(true)">Retry</button>');
       return;
     }
   }
+  if(marksSel && doc.paperMarks) marksSel.value = doc.paperMarks;
   renderPaper(doc);
 }
 
@@ -662,6 +687,14 @@ function addMsg(t, who){
   log.appendChild(d); log.scrollTop = log.scrollHeight;
 }
 function openDoc(i){ activeDocIdx=i; const doc=state.docs[i]; document.getElementById('notes-doc').textContent=doc.name; go2('notes'); ensureNotes(doc); }
+function deleteDoc(i){
+  const doc = state.docs[i]; if(!doc) return;
+  if(!confirm('Delete "'+doc.name+'"? Notes, quiz aani question paper pan delete hotil.')) return;
+  state.docs.splice(i,1);
+  if(activeDocIdx===i) activeDocIdx=null;
+  else if(activeDocIdx!==null && activeDocIdx>i) activeDocIdx--;
+  save(); renderDocs(); renderStats();
+}
 function askTutor(q){ document.getElementById('chatinput').value=q; sendChat(); }
 async function sendChat(){
   const inp = document.getElementById('chatinput');
