@@ -245,7 +245,7 @@ a{color:inherit}
 
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page">
-      <h2 id="greet">Good Morning! 👋</h2>
+      <h2 id="greet">Welcome! 👋</h2>
       <p style="color:var(--ink-soft);margin-top:-8px">Here's your learning progress for today.</p>
       <div class="grid4">
         <div class="card kpi"><span>📄 Total Documents</span><b id="k-docs">0</b></div>
@@ -478,7 +478,14 @@ function enterApp(){
   document.getElementById('view-app').classList.remove('hidden');
   document.getElementById('mename').textContent = state.user.name;
   document.getElementById('av').textContent = state.user.name.charAt(0).toUpperCase();
-  document.getElementById('greet').textContent = 'Good Morning, '+state.user.name+'! 👋';
+function greeting(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Good Morning';
+  if(h < 17) return 'Good Afternoon';
+  if(h < 21) return 'Good Evening';
+  return 'Good Night';
+}
+document.getElementById('greet').textContent = greeting()+', '+state.user.name+'! 👋';
   renderDocs(); renderStats();
   go2('dashboard');
 }
